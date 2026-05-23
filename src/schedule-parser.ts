@@ -87,3 +87,27 @@ export function parseSchedule(expression: string): string {
 
   throw new Error(`Unrecognized schedule expression: "${expression}"`);
 }
+
+/**
+ * Describes a cron expression in human-readable form.
+ * Useful for confirming that a parsed schedule matches the original intent.
+ *
+ * @param cron - A cron expression string (5 fields)
+ * @returns A plain-English description of the schedule
+ */
+export function describeCron(cron: string): string {
+  const parts = cron.trim().split(/\s+/);
+  if (parts.length !== 5) throw new Error(`Expected 5-field cron expression, got: "${cron}"`);
+  const [minute, hour, , , weekday] = parts;
+
+  if (minute.startsWith("*/")) return `Every ${minute.slice(2)} minute(s)`;
+  if (hour.startsWith("*/")) return `Every ${hour.slice(2)} hour(s) at minute 0`;
+  if (hour === "*") return "Every hour";
+
+  const timeLabel = `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+  if (weekday === "1-5") return `Every weekday at ${timeLabel}`;
+  if (weekday === "*") return `Every day at ${timeLabel}`;
+
+  const dayName = Object.keys(DAYS_OF_WEEK).find((d) => DAYS_OF_WEEK[d] === parseInt(weekday, 10));
+  return `Every ${dayName ?? `weekday ${weekday}`} at ${timeLabel}`;
+}
